@@ -131,4 +131,7 @@ dmypy.json
 # VSCode
 .vscode/
 
+# IntelliJ/Jetbrains
+.idea/
+
 ignore_*
