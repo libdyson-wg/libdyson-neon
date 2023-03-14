@@ -17,7 +17,7 @@ try:
     )
 except DysonFailedToParseWifiInfo:
     print(
-        "Failed to parse SSID. Please report this to https://github.com/libdyson-wg/libdyson_neo/issues/new"
+        "Failed to parse SSID. Please report this to https://github.com/libdyson-wg/libdyson-neon/issues/new"
     )
 print()
 print("Serial:", serial)
