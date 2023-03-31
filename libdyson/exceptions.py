@@ -21,6 +21,10 @@ class DysonLoginFailure(DysonException):
     """Represents failure during logging in."""
 
 
+class DysonAPIProvisionFailure(DysonException):
+    """Represents failure during logging in."""
+
+
 class DysonOTPTooFrequently(DysonException):
     """Represents requesting OTP code too frequently."""
 

@@ -14,6 +14,7 @@ from libdyson.cloud.account import (
     API_PATH_MOBILE_REQUEST,
     API_PATH_MOBILE_VERIFY,
     API_PATH_USER_STATUS,
+    API_PATH_PROVISION_APP,
     DYSON_API_HOST_CN,
     DysonAccountCN,
     HTTPBearerAuth,
@@ -26,6 +27,7 @@ from libdyson.exceptions import (
     DysonNetworkError,
     DysonOTPTooFrequently,
     DysonServerError,
+    DysonAPIProvisionFailure,
 )
 
 from . import AUTH_ACCOUNT, AUTH_INFO, AUTH_PASSWORD
@@ -99,6 +101,18 @@ DEVICES = [
 ]
 
 
+def _app_provision_handler(
+        params: dict, json: dict, auth: Optional[AuthBase], **kwargs
+) -> Tuple[int, Optional[str]]:
+    return 200, '"5.0.21061"'
+
+
+def _app_provision_handler_error(
+        params: dict, json: dict, auth: Optional[AuthBase], **kwargs
+) -> Tuple[int, Optional[str]]:
+    return 404, ''
+
+
 @pytest.fixture(autouse=True)
 def mocked_requests(mocked_requests: MockedRequests) -> MockedRequests:
     """Return mocked requests library."""
@@ -162,6 +176,7 @@ def mocked_requests(mocked_requests: MockedRequests) -> MockedRequests:
         return (200, DEVICES)
 
     mocked_requests.register_handler("POST", API_PATH_USER_STATUS, _user_status_handler)
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, _app_provision_handler)
     mocked_requests.register_handler(
         "POST", API_PATH_EMAIL_REQUEST, _email_request_handler
     )
@@ -177,6 +192,18 @@ def mocked_requests(mocked_requests: MockedRequests) -> MockedRequests:
     mocked_requests.register_handler("GET", API_PATH_DEVICES, _devices_handler)
     return mocked_requests
 
+
+def test_account_provision_api(mocked_requests: MockedRequests):
+    account = DysonAccount()
+
+    assert account.provision_api() is None
+
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, _app_provision_handler_error)
+
+    with pytest.raises(DysonAPIProvisionFailure):
+        account.provision_api()
+
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, _app_provision_handler)
 
 def test_account():
     """Test account functionalities."""
