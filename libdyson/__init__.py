@@ -64,7 +64,6 @@ def get_device(serial: str, credential: str, device_type: str) -> Optional[Dyson
     if device_type in [
         DEVICE_TYPE_PURE_HOT_COOL,
         DEVICE_TYPE_PURE_HOT_COOL_NEW,
-        DEVICE_TYPE_PURIFIER_HOT_COOL_FORMALDEHYDE,
     ]:
         return DysonPureHotCool(serial, credential, device_type)
     if device_type == DEVICE_TYPE_PURIFIER_HOT_COOL_FORMALDEHYDE:
