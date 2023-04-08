@@ -8,15 +8,15 @@ from libdyson.const import (
     ENVIRONMENTAL_INIT,
     ENVIRONMENTAL_OFF,
 )
-from libdyson.dyson_pure_humidify_cool import DysonPurifierHumidifyCoolFormaldehyde
+from libdyson.dyson_pure_hot_cool import DysonPurifierHotCoolFormaldehyde
 
 from . import CREDENTIAL, HOST, SERIAL
 from .mocked_mqtt import MockedMQTT
-from .test_pure_humidify_cool import STATUS as TEST_PURE_HUMIDIFY_COOL_STATUS
+from .test_pure_cool import STATUS as TEST_PURE_COOL_STATUS
 
 DEVICE_TYPE = DEVICE_TYPE_PURIFIER_HOT_COOL_FORMALDEHYDE
 
-STATUS = TEST_PURE_HUMIDIFY_COOL_STATUS
+STATUS = TEST_PURE_COOL_STATUS
 ENVIRONMENTAL_DATA = {
     "data": {
         "tact": "OFF",
@@ -36,7 +36,7 @@ ENVIRONMENTAL_DATA = {
 
 def test_properties(mqtt_client: MockedMQTT):
     """Test properties of Purifier Hot+Cool Formaldehyde."""
-    device = DysonPurifierHumidifyCoolFormaldehyde(SERIAL, CREDENTIAL, DEVICE_TYPE)
+    device = DysonPurifierHotCoolFormaldehyde(SERIAL, CREDENTIAL, DEVICE_TYPE)
     device.connect(HOST)
 
     # Environmental
