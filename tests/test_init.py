@@ -16,7 +16,7 @@ from libdyson import (
     DEVICE_TYPE_PURE_HOT_COOL_LINK,
     DEVICE_TYPE_PURE_HUMIDIFY_COOL,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_FORMALDEHYDE,
-    DEVICE_TYPE_PURIFIER_HOT_COOL,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_FORMALDEHYDE,
     Dyson360Eye,
     Dyson360Heurist,
     DysonDevice,
@@ -27,6 +27,7 @@ from libdyson import (
     DysonPureHotCoolLink,
     DysonPureHumidifyCool,
     DysonPurifierHumidifyCoolFormaldehyde,
+    DysonPurifierHotCoolFormaldehyde,
     get_device,
 )
 
@@ -48,7 +49,7 @@ from . import CREDENTIAL, SERIAL
         (DEVICE_TYPE_PURE_HOT_COOL_NEW, DysonPureHotCool),
         (DEVICE_TYPE_PURE_HUMIDIFY_COOL, DysonPureHumidifyCool),
         (DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_FORMALDEHYDE, DysonPurifierHumidifyCoolFormaldehyde),
-        (DEVICE_TYPE_PURIFIER_HOT_COOL, DysonPureHotCool),
+        (DEVICE_TYPE_PURIFIER_HOT_COOL_FORMALDEHYDE, DysonPurifierHotCoolFormaldehyde),
     ],
 )
 def test_get_device(device_type: str, class_type: Type[DysonDevice]):

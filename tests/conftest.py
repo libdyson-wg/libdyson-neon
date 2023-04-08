@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 
-from . import CREDENTIAL, HOST, SERIAL
-from .mocked_mqtt import MockedMQTT
+from tests import CREDENTIAL, HOST, SERIAL
+from tests.mocked_mqtt import MockedMQTT
 
 
 @pytest.fixture()
