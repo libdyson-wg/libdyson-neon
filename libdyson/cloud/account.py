@@ -14,6 +14,7 @@ from libdyson.exceptions import (
     DysonNetworkError,
     DysonOTPTooFrequently,
     DysonServerError,
+    DysonAPIProvisionFailure,
 )
 
 from .device_info import DysonDeviceInfo
@@ -24,6 +25,7 @@ DYSON_API_HEADERS = {
     "User-Agent": "android client"
 }
 
+API_PATH_PROVISION_APP = "/v1/provisioningservice/application/Android/version"
 API_PATH_USER_STATUS = "/v3/userregistration/email/userstatus"
 API_PATH_EMAIL_REQUEST = "/v3/userregistration/email/auth"
 API_PATH_EMAIL_VERIFY = "/v3/userregistration/email/verify"
@@ -116,9 +118,38 @@ class DysonAccount:
             raise DysonServerError
         return response
 
-    def login_email_otp(self, email: str, region: str) -> Callable[[str], dict]:
+    def provision_api(self) -> None:
+        """Provision the client connection to the API
+
+        Calls an app provisioning API. This is expected by the Dyson App API and makes the API server ready to accept
+        other API calls from the current IP Address.
+
+        Basically, this unlocks the API - the return value is not needed, and we don't need to save any cookies or
+        session tokens. It seems like the API Server sets some internal flag allowing API Calls from a specific address
+        based solely on this endpoint being called.
+
+        This isn't likely to be a security measure. It returns a version number in a json-encoded string: `"5.0.21061"`
+        and that is likely consumed by an app. Presumably, an official Dyson mobile app could check the version against
+        some internal expected value and, for example, prompt a user that it is outdated and direct them to the app
+        store to download a new version in order to continue working.
+        """
+
+        response = self.request(
+            "GET",
+            API_PATH_PROVISION_APP,
+            params=None,
+            data=None,
+            auth=False,
+        )
+
+        if response.status_code != 200:
+            raise DysonAPIProvisionFailure
+
+    def login_email_otp(self, email: str, region: str) -> Callable[[str, str], dict]:
         """Login using email and OTP code."""
-        # Check account status first. This is expected by the cloud API.
+        self.provision_api()
+
+        # Check account status. This tells us whether an account is active or not.
         response = self.request(
             "POST",
             API_PATH_USER_STATUS,
@@ -166,6 +197,7 @@ class DysonAccount:
         return _verify
 
     def devices(self) -> List[DysonDeviceInfo]:
+        self.provision_api()
         """Get device info from cloud account."""
         devices = []
         response = self.request("GET", API_PATH_DEVICES)
@@ -185,6 +217,8 @@ class DysonAccountCN(DysonAccount):
     _HOST = DYSON_API_HOST_CN
 
     def login_mobile_otp(self, mobile: str) -> Callable[[str], dict]:
+        self.provision_api()
+
         """Login using phone number and OTP code."""
         response = self.request(
             "POST",
