@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.0 (2023-04-10)
+
+- Fix dyson API login issues ([@dotvezz](https://github.com/dotvezz))
+
 ## v0.9.0 (2023-03-13)
 
 - Fix WiFi SSID regex for some serial numbers ([@T4cC0re](https://github.com/T4cC0re))
