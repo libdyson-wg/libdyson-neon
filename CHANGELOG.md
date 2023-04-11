@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.1 (2023-04-10)
+
+- Add support for Purifier Humidify+Cool (358K) ([@dotvezz](https://github.com/dotvezz))
+
 ## v0.10.0 (2023-04-10)
 
 - Fix dyson API login issues ([@dotvezz](https://github.com/dotvezz))
