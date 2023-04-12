@@ -4,7 +4,7 @@ import pytest
 
 from libdyson import (
     DEVICE_TYPE_PURE_HUMIDIFY_COOL,
-    DysonPureHumidifyCool,
+    DysonPurifierHumidifyCool,
     HumidifyOscillationMode,
     WaterHardness,
 )
@@ -33,7 +33,7 @@ STATUS = {
 
 def test_properties(mqtt_client: MockedMQTT):
     """Test properties of Pure Hot+Cool Link."""
-    device = DysonPureHumidifyCool(SERIAL, CREDENTIAL, DEVICE_TYPE)
+    device = DysonPurifierHumidifyCool(SERIAL, CREDENTIAL, DEVICE_TYPE)
     device.connect(HOST)
 
     assert device.oscillation is True
@@ -109,7 +109,7 @@ def test_command(
 ):
     """Test commands of Pure Hot+Cool Link."""
     assert_command(
-        DysonPureHumidifyCool(SERIAL, CREDENTIAL, DEVICE_TYPE),
+        DysonPurifierHumidifyCool(SERIAL, CREDENTIAL, DEVICE_TYPE),
         mqtt_client,
         command,
         command_args,

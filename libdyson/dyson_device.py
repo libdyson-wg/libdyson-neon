@@ -3,7 +3,7 @@ from abc import abstractmethod
 import json
 import logging
 import threading
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 
 import paho.mqtt.client as mqtt
 
@@ -164,7 +164,7 @@ class DysonDevice:
     def _update_status(self, payload: dict) -> None:
         """Update the device status."""
 
-    def _send_command(self, command: str, data: Optional[dict] = None):
+    def _send_command(self, command: str, data: Optional[dict] = None) -> None:
         if not self.is_connected:
             raise DysonNotConnected
         if data is None:
@@ -176,7 +176,7 @@ class DysonDevice:
         payload.update(data)
         self._mqtt_client.publish(self._command_topic, json.dumps(payload))
 
-    def request_current_status(self):
+    def request_current_status(self) -> None:
         """Request current status."""
         if not self.is_connected:
             raise DysonNotConnected
@@ -195,8 +195,26 @@ class DysonFanDevice(DysonDevice):
         super().__init__(serial, credential)
         self._device_type = device_type
 
-        self._environmental_data = None
+        self._environmental_data = {}
         self._environmental_data_available = threading.Event()
+
+    def interview(self) -> None:
+        if not self._status_data_available.is_set():
+            self.request_environmental_data()
+            self._environmental_data_available.wait(timeout=TIMEOUT)
+
+        def get_test(self):
+            """ For testing since I don't have formaldehyde devices """
+            return 1
+        setattr(DysonFanDevice, "test", get_test)
+
+        _LOGGER.warning("checking for hcho")
+        if "hcho" in self._environmental_data:
+            _LOGGER.warning("Found hcho")
+            def get_formaldehyde(self):
+                """Return formaldehyde reading."""
+                return int(self._get_environmental_field_value("hcho"))
+            setattr(DysonFanDevice, "formaldehyde", property(get_formaldehyde))
 
     @property
     def device_type(self) -> str:
@@ -277,7 +295,7 @@ class DysonFanDevice(DysonDevice):
         return self._get_environmental_field_value("sltm")
 
     @staticmethod
-    def _get_field_value(state, field):
+    def _get_field_value(state: Dict[str, Any], field: str):
         return state[field][1] if isinstance(state[field], list) else state[field]
 
     def _get_environmental_field_value(self, field, divisor=1):

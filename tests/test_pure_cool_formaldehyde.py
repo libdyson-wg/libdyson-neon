@@ -3,18 +3,18 @@
 import pytest
 
 from libdyson.const import (
-    DEVICE_TYPE_PURE_COOL_FORMALDEHYDE,
+    DEVICE_TYPE_PURIFIER_COOL_E,
     ENVIRONMENTAL_FAIL,
     ENVIRONMENTAL_INIT,
     ENVIRONMENTAL_OFF,
 )
-from libdyson.dyson_pure_cool import DysonPureCoolFormaldehyde
+from libdyson.dyson_pure_cool import DysonPureCool
 
 from . import CREDENTIAL, HOST, SERIAL
 from .mocked_mqtt import MockedMQTT
 from .test_pure_cool import STATUS as TEST_PURE_COOL_STATUS
 
-DEVICE_TYPE = DEVICE_TYPE_PURE_COOL_FORMALDEHYDE
+DEVICE_TYPE = DEVICE_TYPE_PURIFIER_COOL_E
 
 STATUS = TEST_PURE_COOL_STATUS
 ENVIRONMENTAL_DATA = {
@@ -36,7 +36,7 @@ ENVIRONMENTAL_DATA = {
 
 def test_properties(mqtt_client: MockedMQTT):
     """Test properties of Pure Cool Link Formaldehyde."""
-    device = DysonPureCoolFormaldehyde(SERIAL, CREDENTIAL, DEVICE_TYPE)
+    device = DysonPureCool(SERIAL, CREDENTIAL, DEVICE_TYPE)
     device.connect(HOST)
 
     # Environmental

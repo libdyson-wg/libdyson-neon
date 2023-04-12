@@ -15,7 +15,7 @@ WATER_HARDNESS_STR_TO_ENUM = {
 }
 
 
-class DysonPureHumidifyCool(DysonPureCoolBase):
+class DysonPurifierHumidifyCool(DysonPureCoolBase):
     """Dyson Pure Humidify+Cool device."""
 
     @property
@@ -100,11 +100,3 @@ class DysonPureHumidifyCool(DysonPureCoolBase):
         """Set water hardness."""
         self._set_configuration(wath=WATER_HARDNESS_ENUM_TO_STR[water_hardness])
 
-
-class DysonPurifierHumidifyCoolFormaldehyde(DysonPureHumidifyCool):
-    """Dyson Purifier Humidify+Cool Formaldehyde device."""
-
-    @property
-    def formaldehyde(self):
-        """Return formaldehyde reading."""
-        return int(self._get_environmental_field_value("hcho"))
