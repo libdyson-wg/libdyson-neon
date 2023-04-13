@@ -55,3 +55,7 @@ class DysonConnectionRefused(DysonException):
 
 class DysonFailedToParseWifiInfo(DysonException):
     """Represents failed to parse WiFi information."""
+
+
+class DysonNoEnvironmentalData(DysonException):
+    """Represents mqtt not connected."""

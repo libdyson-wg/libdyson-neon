@@ -3,7 +3,7 @@ from abc import abstractmethod
 import json
 import logging
 import threading
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Union
 
 import paho.mqtt.client as mqtt
 
@@ -17,7 +17,7 @@ from .exceptions import (
     DysonConnectionRefused,
     DysonConnectTimeout,
     DysonInvalidCredential,
-    DysonNotConnected,
+    DysonNotConnected, DysonNoEnvironmentalData,
 )
 from .utils import mqtt_time
 
@@ -198,24 +198,6 @@ class DysonFanDevice(DysonDevice):
         self._environmental_data = {}
         self._environmental_data_available = threading.Event()
 
-    def interview(self) -> None:
-        if not self._status_data_available.is_set():
-            self.request_environmental_data()
-            self._environmental_data_available.wait(timeout=TIMEOUT)
-
-        def get_test(self):
-            """ For testing since I don't have formaldehyde devices """
-            return 1
-        setattr(DysonFanDevice, "test", get_test)
-
-        _LOGGER.warning("checking for hcho")
-        if "hcho" in self._environmental_data:
-            _LOGGER.warning("Found hcho")
-            def get_formaldehyde(self):
-                """Return formaldehyde reading."""
-                return int(self._get_environmental_field_value("hcho"))
-            setattr(DysonFanDevice, "formaldehyde", property(get_formaldehyde))
-
     @property
     def device_type(self) -> str:
         """Device type."""
@@ -275,6 +257,15 @@ class DysonFanDevice(DysonDevice):
         return self._get_field_value(self._status, "wacd")
 
     @property
+    def formaldehyde(self) -> Optional[int]:
+        """Return formaldehyde reading."""
+        val = self._get_environmental_field_value("hcho")
+        if val is None:
+            return None
+
+        return int(val)
+
+    @property
     def humidity(self) -> int:
         """Return humidity in percentage."""
         return self._get_environmental_field_value("hact")
@@ -296,9 +287,12 @@ class DysonFanDevice(DysonDevice):
 
     @staticmethod
     def _get_field_value(state: Dict[str, Any], field: str):
-        return state[field][1] if isinstance(state[field], list) else state[field]
+        try:
+            return  state[field][1] if isinstance(state[field], list) else state[field]
+        except:
+            return None
 
-    def _get_environmental_field_value(self, field, divisor=1):
+    def _get_environmental_field_value(self, field, divisor=1) -> Optional[Union[int, float]]:
         value = self._get_field_value(self._environmental_data, field)
         if value == "OFF":
             return ENVIRONMENTAL_OFF
@@ -306,6 +300,8 @@ class DysonFanDevice(DysonDevice):
             return ENVIRONMENTAL_INIT
         if value == "FAIL":
             return ENVIRONMENTAL_FAIL
+        if value == "NONE" or value is None:
+            return None
         if divisor == 1:
             return int(value)
         return float(value) / divisor
