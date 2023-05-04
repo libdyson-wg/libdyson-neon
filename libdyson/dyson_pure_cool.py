@@ -63,14 +63,14 @@ class DysonPureCoolBase(DysonFanDevice):
         return int(self._get_environmental_field_value("pm10"))
 
     @property
-    def volatile_organic_compounds(self):
-        """Return VOCs in micro grams per cubic meter."""
-        return int(self._get_environmental_field_value("va10"))
+    def volatile_organic_compounds(self) -> float:
+        """Return the index value for VOC"""
+        return self._get_environmental_field_value("va10", divisor=10)
 
     @property
-    def nitrogen_dioxide(self):
-        """Return nitrogen dioxide level in micro grams per cubic meter."""
-        return int(self._get_environmental_field_value("noxl"))
+    def nitrogen_dioxide(self) -> float:
+        """Return the index value for nitrogen."""
+        return self._get_environmental_field_value("noxl", divisor=10)
 
     def turn_on(self) -> None:
         """Turn on the device."""
