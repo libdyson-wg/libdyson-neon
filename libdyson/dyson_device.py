@@ -294,7 +294,7 @@ class DysonFanDevice(DysonDevice):
 
     def _get_environmental_field_value(self, field, divisor=1) -> Optional[Union[int, float]]:
         value = self._get_field_value(self._environmental_data, field)
-        if value == "OFF":
+        if value == "OFF" or value == "off":
             return ENVIRONMENTAL_OFF
         if value == "INIT":
             return ENVIRONMENTAL_INIT

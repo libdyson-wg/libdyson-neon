@@ -64,6 +64,6 @@ def test_properties(mqtt_client: MockedMQTT):
     device.request_environmental_data()
     assert device.particulate_matter_2_5 == 9
     assert device.particulate_matter_10 == 5
-    assert device.volatile_organic_compounds == 4
-    assert device.nitrogen_dioxide == 11
+    assert device.volatile_organic_compounds == .4
+    assert device.nitrogen_dioxide == 1.1
     assert device.formaldehyde == 1
