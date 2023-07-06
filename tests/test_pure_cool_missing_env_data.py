@@ -58,7 +58,7 @@ def test_no_hcho(mqtt_client: MockedMQTT):
             "p10r": "0009",
             "sltm": "OFF",
             "hcho": "NONE",
-            "hchr": "0002",
+            "hchr": "NONE",
         }
     }
     device.request_environmental_data()
@@ -92,7 +92,6 @@ def test_missing_data(mqtt_client: MockedMQTT):
             "p25r": "0010",
             "p10r": "0009",
             "sltm": "OFF",
-            "hchr": "0002",
         }
     }
     device.request_environmental_data()
