@@ -1,0 +1,53 @@
+[
+    192.168.1.137: DysonDeviceInfo(active=None, serial='X3V-US-RKA0414A', name='Dyson Purifier Hot+Cool™', version='ECG2PF.34.00.003.0042', credential='8qno2lc/IRy2xAFUem4u6AwBmk8YzWiDesTCS37VcSuphygAry+LDukJWfS1y93iYqGvWIaJ4xOWxu5r4OS+3g==', auto_update=False, new_version_available=True, product_type='527K')
+    DysonDeviceInfo(active=None, serial='N9R-US-PJB7094A', name='', version='ECG2PF.30.06.003.0002', credential='8xPhRU9+SwTOTyU1Fni0VLpjd/hrDCPb2oyqp1eOGM78TmGnd7pae6jNsYTH4qwMnpOOFt2C/6z+20FDfGibhw==', auto_update=False, new_version_available=False, product_type='527'),
+    DysonDeviceInfo(active=None, serial='NM7-US-REA2128A', name='Downstairs', version='21.04.03', credential='bRSU6+ck9EVZ4PtCUaqJp/XtbEzxEBgGLvPwg3XFJWRQvGMJYKKY8SjFF+153WQ3/YLmy3mUeB2glO6efEHZIQ==', auto_update=True, new_version_available=False, product_type='475'),
+    DysonDeviceInfo(active=None, serial='NM7-US-REA2583A', name='Dyson Fan', version='21.04.03', credential='qQF4gMdA6Pg8OvY0OKmjpSOq/PAdcnD/Qv3KW8ecrLV3P82iMf9fK/TJBBpw0/2r7uovH0AwXL/WLHJYWpkNvg==', auto_update=False, new_version_available=False, product_type='475'),
+]
+f
+Environmental:
+{
+    'hact': '0053', humidity
+    'hcho': 'NONE', Formaldehyde
+    'hchr': 'NONE', High_Res Formaldehyde
+    'noxl': '0002', Nitrogen Dioxide
+    'p10r': '0000', "High_res" pm10
+    'p25r': '0000', "High_res" pm25
+    'pm10': '0000',
+    'pm25': '0000',
+    'sltm': 'OFF',
+    'tact': '2964', Temp
+    'va10': '0008', Gen2 VOC
+}
+{"msg":"ENVIRONMENTAL-CURRENT-SENSOR-DATA","time":"2023-06-11T01:59:08.000Z","data":{"tact":"2958","hact":"0052","pm25":"0002","pm10":"0001","va10":"0008","noxl":"0003","p25r":"0003","p10r":"0003","hcho":"NONE","hchr":"NONE","sltm":"OFF"}}
+
+State:
+{
+    'fpwr': 'ON', Fan Power
+    'auto': 'OFF', Auto
+    'oscs': 'OFF', Oscillation something?
+    'oson': 'OFF', Oscillation something again
+    'nmod': 'OFF', ???
+    'rhtm': 'ON', Continuous Monitoring
+    'fnst': 'FAN', Fan State
+    'ercd': '32U2', Error Code - 32U2 is probably filter(s)
+    'wacd': 'NONE', Warning Code
+    'nmdv': '0004', Night Mode Speed
+    'fnsp': '0008', Fan Speed
+    'bril': '0002', ???
+    'corf': 'OFF',
+    'cflr': 'INV', Carbon Filter Life
+    'hflr': '0073', Hepa Filter Life
+    'cflt': 'NONE', ???
+    'hflt': 'GCOM', ???
+    'sltm': 'OFF', Sleep Timer
+    'osal': '0135', Oscillation Angle Low
+    'osau': '0225', Oscillation Angle High
+    'ancp': 'CUST', Oscillation Mode
+    'hmod': 'OFF', Heat Mode
+    'hmax': '2936', Heat Target
+    'tilt': 'OK', Tilt
+    'hsta': 'OFF', Heat State
+    'psta': 'OFF',
+    'fdir': 'ON', Front Airflow
+}
