@@ -120,6 +120,7 @@ def test_properties(mqtt_client: MockedMQTT):
             "noxl": "0011",
             "p25r": "0010",
             "p10r": "0009",
+            "co2r": "0400",
             "sltm": "OFF",
         }
     }
@@ -128,6 +129,7 @@ def test_properties(mqtt_client: MockedMQTT):
     assert device.particulate_matter_10 == 5
     assert device.volatile_organic_compounds == 0.4
     assert device.nitrogen_dioxide == 1.1
+    assert device.carbon_dioxide == 400
 
 
 @pytest.mark.parametrize(
