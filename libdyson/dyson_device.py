@@ -34,6 +34,7 @@ class DysonDevice:
         self._serial = serial
         self._credential = credential
         self._mqtt_client = None
+        self.preset_mode = None
         self._connected = threading.Event()
         self._disconnected = threading.Event()
         self._status = None
