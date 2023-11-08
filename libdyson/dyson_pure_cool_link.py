@@ -53,7 +53,7 @@ class DysonPureCoolLink(DysonFanDevice):
 
     def turn_on(self) -> None:
         """Turn on the device."""
-        self._set_configuration(fmod="FAN")
+        self._set_configuration(fmod=self.preset_mode)
 
     def turn_off(self) -> None:
         """Turn off the device."""
