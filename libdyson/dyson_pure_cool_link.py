@@ -20,7 +20,11 @@ class DysonPureCoolLink(DysonFanDevice):
     @property
     def auto_mode(self) -> bool:
         """Return auto mode status."""
-        return self.fan_mode == "AUTO"
+        if not self.is_on:
+            return self.preset_mode == "AUTO"
+        else:
+            self.preset_mode = self.fan_mode
+            return self.fan_mode == "AUTO"
 
     @property
     def oscillation(self) -> bool:
@@ -60,10 +64,12 @@ class DysonPureCoolLink(DysonFanDevice):
 
     def enable_auto_mode(self) -> None:
         """Turn on auto mode."""
+        self.preset_mode = "AUTO"
         self._set_configuration(fmod="AUTO")
 
     def disable_auto_mode(self) -> None:
         """Turn off auto mode."""
+        self.preset_mode = "FAN"
         self._set_configuration(fmod="FAN")
 
     def enable_oscillation(self) -> None:
