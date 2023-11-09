@@ -7,6 +7,10 @@ from .dyson_device import DysonFanDevice
 class DysonPureCoolLink(DysonFanDevice):
     """Dyson Pure Cool Link device."""
 
+    def __init__(self, serial: str, credential: str, device_type: str):
+        super().__init__(serial, credential, device_type)
+        self.preset_mode = "FAN"
+
     @property
     def fan_mode(self) -> str:
         """Return the fan mode of the fan."""
