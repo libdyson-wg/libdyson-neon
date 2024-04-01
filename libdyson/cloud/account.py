@@ -35,6 +35,7 @@ API_PATH_DEVICES = "/v2/provisioningservice/manifest"
 
 FILE_PATH = pathlib.Path(__file__).parent.absolute()
 
+
 class HTTPBearerAuth(AuthBase):
     """Attaches HTTP Bearder Authentication to the given Request object."""
 
@@ -202,7 +203,7 @@ class DysonAccount:
         devices = []
         response = self.request("GET", API_PATH_DEVICES)
         for raw in response.json():
-            if not raw.get("LocalCredentials"):
+            if raw.get("LocalCredentials") is None:
                 # Lightcycle lights don't have LocalCredentials.
                 # They're not supported so just skip.
                 # See https://github.com/shenxn/libdyson/issues/2 for more info
