@@ -54,8 +54,8 @@ def test_no_hcho(mqtt_client: MockedMQTT):
             "pm10": "0005",
             "va10": "0004",
             "noxl": "0011",
-            "p25r": "0010",
-            "p10r": "0009",
+            "p25r": "0009",
+            "p10r": "0005",
             "sltm": "OFF",
             "hcho": "NONE",
             "hchr": "NONE",
@@ -89,8 +89,8 @@ def test_missing_data(mqtt_client: MockedMQTT):
             "pm10": "0005",
             "va10": "0004",
             "noxl": "0011",
-            "p25r": "0010",
-            "p10r": "0009",
+            "p25r": "0009",
+            "p10r": "0005",
             "sltm": "OFF",
         }
     }

@@ -1,4 +1,4 @@
-"""Tests for Pure Cool."""
+"""Tests for Big+Quiet."""
 
 import pytest
 
@@ -35,8 +35,8 @@ STATUS = {
         "cflr": "0100",
         "hflr": "0100",
         "sltm": "OFF",
-        "osal": "0063",
-        "osau": "0243",
+        "otal": "0025",
+        "otau": "0025",
         "ancp": "CUST",
     },
     "scheduler": {"srsc": "000000005b1792f0", "dstv": "0001", "tzid": "0001"},
@@ -96,8 +96,8 @@ def test_properties(mqtt_client: MockedMQTT):
             "cflr": ["0100", "INV"],
             "hflr": ["0100", "80"],
             "sltm": ["OFF", "OFF"],
-            "osal": ["0063", "0030"],
-            "osau": ["0243", "0200"],
+            "otal": ["0025", "0050"],
+            "otau": ["0025", "0050"],
             "ancp": ["CUST", "CUST"],
         },
         "scheduler": {"srsc": "000000005b1792f0", "dstv": "0001", "tzid": "0001"},
@@ -109,6 +109,7 @@ def test_properties(mqtt_client: MockedMQTT):
     assert device.night_mode_speed == 10
     assert device.carbon_filter_life is None
     assert device.hepa_filter_life == 80
+    assert device.tilt == 50
 
     mqtt_client._environmental_data = {
         "data": {
@@ -118,9 +119,11 @@ def test_properties(mqtt_client: MockedMQTT):
             "pm10": "0005",
             "va10": "0004",
             "noxl": "0011",
-            "p25r": "0010",
-            "p10r": "0009",
+            "p25r": "0009",
+            "p10r": "0005",
             "co2r": "0400",
+            "otal": "0050",
+            "otau": "0050",
             "sltm": "OFF",
         }
     }
@@ -144,6 +147,7 @@ def test_properties(mqtt_client: MockedMQTT):
         ("disable_continuous_monitoring", [], {"fpwr": "OFF", "rhtm": "OFF"}),
         ("enable_front_airflow", [], {"fdir": "ON"}),
         ("disable_front_airflow", [], {"fdir": "OFF"}),
+        ("set_tilt", [25], {"otal": "0025", "otau": "0025"}),
     ],
 )
 def test_command(
