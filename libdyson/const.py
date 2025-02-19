@@ -70,6 +70,15 @@ class HumidifyOscillationMode(Enum):
     CUST = "CUST"
 
 
+class Tilt(Enum):
+    """Pure Humidify+Cool oscillation mode."""
+
+    DEGREE_0 = "0000"
+    DEGREE_25 = "0025"
+    DEGREE_50 = "0050"
+    BREEZE = "0359"
+
+
 class WaterHardness(Enum):
     """Water Hardness."""
 
