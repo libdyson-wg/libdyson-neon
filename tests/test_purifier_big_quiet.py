@@ -37,6 +37,7 @@ STATUS = {
         "sltm": "OFF",
         "otal": "0025",
         "otau": "0025",
+        "anct": "CUST",
         "ancp": "CUST",
     },
     "scheduler": {"srsc": "000000005b1792f0", "dstv": "0001", "tzid": "0001"},
@@ -98,6 +99,7 @@ def test_properties(mqtt_client: MockedMQTT):
             "sltm": ["OFF", "OFF"],
             "otal": ["0025", "0050"],
             "otau": ["0025", "0050"],
+            "anct": ["CUST", "CUST"],
             "ancp": ["CUST", "CUST"],
         },
         "scheduler": {"srsc": "000000005b1792f0", "dstv": "0001", "tzid": "0001"},
@@ -147,7 +149,8 @@ def test_properties(mqtt_client: MockedMQTT):
         ("disable_continuous_monitoring", [], {"fpwr": "OFF", "rhtm": "OFF"}),
         ("enable_front_airflow", [], {"fdir": "ON"}),
         ("disable_front_airflow", [], {"fdir": "OFF"}),
-        ("set_tilt", [25], {"otal": "0025", "otau": "0025"}),
+        ("set_tilt", [25], {"otal": "0025", "otau": "0025", "anct": "CUST"}),
+        ("set_tilt", [359], {"otal": "0359", "otau": "0359", "anct": "BRZE"}),
     ],
 )
 def test_command(
