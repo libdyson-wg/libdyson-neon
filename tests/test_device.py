@@ -184,3 +184,111 @@ def test_status_update(mqtt_client: MockedMQTT):
     device.remove_message_listener(callback)
     mqtt_client.state_change(new_status)
     callback.assert_not_called()
+
+
+def test_mqtt_connection_error_codes(mqtt_client: MockedMQTT):
+    """Test various MQTT connection error code handling."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    
+    # Test different connection refused error codes
+    error_codes = [
+        (4, DysonInvalidCredential),  # Bad username/password (CONNACK_REFUSED_BAD_USERNAME_PASSWORD)
+        (1, DysonConnectionRefused),  # Unacceptable protocol version
+        (2, DysonConnectionRefused),  # Identifier rejected  
+        (3, DysonConnectionRefused),  # Server unavailable
+        (5, DysonConnectionRefused),  # Not authorized
+        (7, DysonConnectionRefused),  # Connection refused
+        (99, DysonConnectionRefused), # Unknown error code
+    ]
+    
+    for error_code, expected_exception in error_codes:
+        mqtt_client.set_connection_result(error_code)
+        
+        with pytest.raises(expected_exception):
+            device.connect(HOST)
+        
+        # Reset for next test
+        mqtt_client.reset()
+
+
+def test_mqtt_disconnect_timeout_warning(mqtt_client: MockedMQTT):
+    """Test disconnect timeout warning."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    device.connect(HOST)
+    
+    # Mock the disconnected event to not be set (timeout scenario)
+    with patch.object(device._disconnected, 'wait', return_value=False):
+        with patch('libdyson.dyson_device._LOGGER.warning') as mock_warning:
+            device.disconnect()
+            mock_warning.assert_called_with("Disconnect timed out")
+
+
+def test_mqtt_message_listener_management():
+    """Test adding and removing message listeners."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    
+    # Test callback functions
+    callback1 = MagicMock()
+    callback2 = MagicMock()
+    callback3 = MagicMock()
+    
+    # Test adding listeners
+    device.add_message_listener(callback1)
+    device.add_message_listener(callback2)
+    assert len(device._callbacks) == 2
+    assert callback1 in device._callbacks
+    assert callback2 in device._callbacks
+    
+    # Test removing existing listener
+    device.remove_message_listener(callback1)
+    assert len(device._callbacks) == 1
+    assert callback1 not in device._callbacks
+    assert callback2 in device._callbacks
+    
+    # Test removing non-existent listener (should not raise error)
+    device.remove_message_listener(callback3)
+    assert len(device._callbacks) == 1
+    assert callback2 in device._callbacks
+
+
+def test_mqtt_on_connect_callback_execution(mqtt_client: MockedMQTT):
+    """Test that callbacks are executed on MQTT connect."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    
+    callback1 = MagicMock()
+    callback2 = MagicMock()
+    
+    device.add_message_listener(callback1)
+    device.add_message_listener(callback2)
+    
+    # Connect should trigger callbacks
+    device.connect(HOST)
+    
+    # Verify callbacks were called with STATE message type
+    callback1.assert_called_with(MessageType.STATE)
+    callback2.assert_called_with(MessageType.STATE)
+
+
+def test_mqtt_on_disconnect_callback_execution(mqtt_client: MockedMQTT):
+    """Test that callbacks are executed on MQTT disconnect."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    
+    callback1 = MagicMock()
+    callback2 = MagicMock()
+    
+    device.add_message_listener(callback1)
+    device.add_message_listener(callback2)
+    
+    # Connect first
+    device.connect(HOST)
+    
+    # Reset mocks to only count disconnect calls
+    callback1.reset_mock()
+    callback2.reset_mock()
+    
+    # Disconnect should trigger callbacks
+    device.disconnect()
+    
+    # Verify callbacks were called with STATE message type
+    callback1.assert_called_with(MessageType.STATE)
+    callback2.assert_called_with(MessageType.STATE)
