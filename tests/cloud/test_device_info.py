@@ -74,11 +74,53 @@ def test_map_product_type_direct_variant_standalone():
     assert map_product_type_to_device_type("TP11") == DEVICE_TYPE_PURE_COOL
 
 
+def test_map_product_type_direct_variant_as_parameter():
+    """Test direct variant mapping when variant is passed as parameter (lines 159-161)."""
+    # This test specifically targets lines 159-161 in map_product_type_to_device_type
+    # These lines are executed when a variant is provided as a parameter and exists
+    # as a direct key in CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE
+    
+    # Test with variants that exist as direct keys in the mapping table
+    # This should hit the "Try direct variant mapping" branch at lines 158-163
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="TP07") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="TP09") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="TP11") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="HP07") == DEVICE_TYPE_PURE_HOT_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="PH03") == DEVICE_TYPE_PURE_HUMIDIFY_COOL
+    
+    # Test case insensitive variant mapping
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="tp07") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="hp07") == DEVICE_TYPE_PURE_HOT_COOL
+    assert map_product_type_to_device_type("UNKNOWN_BASE", variant="ph03") == DEVICE_TYPE_PURE_HUMIDIFY_COOL
+
+
 def test_map_product_type_already_internal_type():
     """Test when product type is already an internal device type."""
     assert map_product_type_to_device_type(DEVICE_TYPE_360_EYE) == DEVICE_TYPE_360_EYE
     assert map_product_type_to_device_type(DEVICE_TYPE_PURE_COOL) == DEVICE_TYPE_PURE_COOL
     assert map_product_type_to_device_type(DEVICE_TYPE_PURIFIER_BIG_QUIET) == DEVICE_TYPE_PURIFIER_BIG_QUIET
+
+
+def test_map_product_type_already_internal_type_with_logging():
+    """Test internal device type detection with logging verification (lines 180-181)."""
+    # This test specifically targets lines 180-181 in map_product_type_to_device_type
+    # These lines are executed when product_type is already an internal device type
+    
+    with patch('logging.getLogger') as mock_get_logger:
+        mock_logger = mock_get_logger.return_value
+        
+        # Test with various internal device types
+        result = map_product_type_to_device_type(DEVICE_TYPE_360_EYE)
+        assert result == DEVICE_TYPE_360_EYE
+        mock_logger.debug.assert_any_call("ProductType is already an internal device type code: %s", DEVICE_TYPE_360_EYE)
+        
+        result = map_product_type_to_device_type(DEVICE_TYPE_PURE_COOL)
+        assert result == DEVICE_TYPE_PURE_COOL
+        mock_logger.debug.assert_any_call("ProductType is already an internal device type code: %s", DEVICE_TYPE_PURE_COOL)
+        
+        result = map_product_type_to_device_type(DEVICE_TYPE_PURIFIER_BIG_QUIET)
+        assert result == DEVICE_TYPE_PURIFIER_BIG_QUIET
+        mock_logger.debug.assert_any_call("ProductType is already an internal device type code: %s", DEVICE_TYPE_PURIFIER_BIG_QUIET)
 
 
 def test_device_info_from_raw():
