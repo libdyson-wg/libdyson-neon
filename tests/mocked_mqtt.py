@@ -29,6 +29,8 @@ class MockedMQTT:
         self._status_topic = status_topic
         self._status = status
         self._environmental_data = environmental_data
+        self._connection_result = 0  # Default success
+        self._force_disconnect = False
 
     def refersh(self, protocol: str):
         """Refresh client state."""
@@ -47,6 +49,19 @@ class MockedMQTT:
 
         return self
 
+    def set_connection_result(self, result_code: int) -> None:
+        """Set the connection result code for testing."""
+        self._connection_result = result_code
+
+    def reset(self) -> None:
+        """Reset the client state for testing."""
+        self._connection_result = 0
+        self._force_disconnect = False
+        self.connected = False
+        self._subscribed = False
+        self.commands = []
+        self.loop_started = False
+
     def username_pw_set(self, username: str, password: str) -> None:
         """Set username and password."""
         self._username = username
@@ -56,6 +71,14 @@ class MockedMQTT:
         """Connect to the server asynchronously."""
         if host != self._expected_host:
             return
+        
+        # Check if we have a forced connection result for testing
+        if self._connection_result != 0:
+            self.on_connect(self, None, None, self._connection_result)
+            if self._connection_result != 0:
+                self.on_disconnect(self, None, 5)
+            return
+            
         if (
             self._username == self._expected_username
             and self._password == self._expected_password

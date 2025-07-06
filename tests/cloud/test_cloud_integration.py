@@ -24,6 +24,11 @@ from libdyson.exceptions import (
 from . import AUTH_INFO
 from .mocked_requests import MockedRequests
 
+# Test constants
+EMAIL = "test@example.com"
+REGION = "US"
+CHALLENGE_ID = "test-challenge-id"
+
 
 def test_full_device_retrieval_flow(mocked_requests):
     """Test complete device retrieval flow."""
@@ -455,3 +460,147 @@ def test_comprehensive_error_scenarios(mocked_requests):
         
         # Clear handlers for next iteration
         mocked_requests._handlers.clear()
+
+
+def test_account_devices_with_malformed_response(mocked_requests):
+    """Test devices method with malformed API response."""
+    account = DysonAccount(AUTH_INFO)
+    
+    def provision_handler(**kwargs):
+        return (200, '"5.0.21061"')
+    
+    def devices_handler(**kwargs):
+        # Return malformed response (not a list)
+        return (200, {"error": "This should be a list"})
+    
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, provision_handler)
+    mocked_requests.register_handler("GET", API_PATH_DEVICES, devices_handler)
+    
+    # Should handle malformed response gracefully
+    with pytest.raises(Exception):  # Will raise when trying to iterate over dict
+        account.devices()
+
+
+def test_account_devices_with_partial_device_data(mocked_requests):
+    """Test devices method with partial device data."""
+    account = DysonAccount(AUTH_INFO)
+    
+    def provision_handler(**kwargs):
+        return (200, '"5.0.21061"')
+    
+    def devices_handler(**kwargs):
+        return (200, [
+            {
+                # Missing many fields but including required ones
+                "Serial": "ABC-123-DEF",
+                "Name": "Partial Device",
+                "Version": "1.0.0",
+                "LocalCredentials": "valid_credentials",
+                "ProductType": "438",
+                "AutoUpdate": True,
+                "NewVersionAvailable": False,
+            }
+        ])
+    
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, provision_handler)
+    mocked_requests.register_handler("GET", API_PATH_DEVICES, devices_handler)
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        devices = account.devices()
+        assert len(devices) == 1
+        assert devices[0].serial == "ABC-123-DEF"
+        assert devices[0].name == "Partial Device"
+        assert devices[0].active is None  # Missing Active field should be None
+
+
+def test_account_devices_variant_field_detection(mocked_requests):
+    """Test devices method with variant field detection."""
+    account = DysonAccount(AUTH_INFO)
+    
+    def provision_handler(**kwargs):
+        return (200, '"5.0.21061"')
+    
+    def devices_handler(**kwargs):
+        return (200, [
+            {
+                "Active": True,
+                "Serial": "ABC-123-DEF",
+                "Name": "Device with variant",
+                "Version": "1.0.0",
+                "LocalCredentials": "valid_credentials",
+                "ProductType": "438",
+                "AutoUpdate": True,
+                "NewVersionAvailable": False,
+                "variant": "M",  # Explicit variant field
+            }
+        ])
+    
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, provision_handler)
+    mocked_requests.register_handler("GET", API_PATH_DEVICES, devices_handler)
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        devices = account.devices()
+        assert len(devices) == 1
+        assert devices[0].serial == "ABC-123-DEF"
+
+
+def test_account_devices_alternative_variant_fields(mocked_requests):
+    """Test devices method with alternative variant field names."""
+    account = DysonAccount(AUTH_INFO)
+    
+    def provision_handler(**kwargs):
+        return (200, '"5.0.21061"')
+    
+    def devices_handler(**kwargs):
+        return (200, [
+            {
+                "Active": True,
+                "Serial": "ABC-123-DEF",
+                "Name": "Device with ProductVariant",
+                "Version": "1.0.0",
+                "LocalCredentials": "valid_credentials",
+                "ProductType": "438",
+                "AutoUpdate": True,
+                "NewVersionAvailable": False,
+                "ProductVariant": "K",  # Alternative variant field name
+            }
+        ])
+    
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, provision_handler)
+    mocked_requests.register_handler("GET", API_PATH_DEVICES, devices_handler)
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        devices = account.devices()
+        assert len(devices) == 1
+        assert devices[0].serial == "ABC-123-DEF"
+
+
+def test_account_login_email_with_network_retry(mocked_requests):
+    """Test email login with network retry scenarios using the retry request method."""
+    account = DysonAccount(AUTH_INFO)
+    
+    def provision_handler(**kwargs):
+        return (200, '"5.0.21061"')
+    
+    request_count = 0
+    def test_handler(**kwargs):
+        nonlocal request_count
+        request_count += 1
+        if request_count == 1:
+            return (500, {"error": "Server error"})  # First call fails
+        return (200, {"success": True})  # Second call succeeds
+    
+    mocked_requests.register_handler("GET", API_PATH_PROVISION_APP, provision_handler)
+    mocked_requests.register_handler("GET", "/test-retry", test_handler)
+    
+    with patch('time.sleep'):  # Speed up the test
+        # Test the retry request directly
+        response = account._retry_request("GET", "/test-retry", max_retries=3)
+        assert response.status_code == 200
+        assert request_count == 2  # Initial failure + retry

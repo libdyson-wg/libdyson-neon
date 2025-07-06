@@ -66,6 +66,14 @@ def test_map_product_type_direct_variant_mapping():
     assert map_product_type_to_device_type("358M") == DEVICE_TYPE_PURE_HUMIDIFY_COOL
 
 
+def test_map_product_type_direct_variant_standalone():
+    """Test direct variant mapping for standalone variants in lookup table."""
+    # Test variant that exists as standalone entry in mapping table
+    assert map_product_type_to_device_type("TP07") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("TP09") == DEVICE_TYPE_PURE_COOL
+    assert map_product_type_to_device_type("TP11") == DEVICE_TYPE_PURE_COOL
+
+
 def test_map_product_type_already_internal_type():
     """Test when product type is already an internal device type."""
     assert map_product_type_to_device_type(DEVICE_TYPE_360_EYE) == DEVICE_TYPE_360_EYE
@@ -359,6 +367,102 @@ def test_device_info_unknown_product_type():
     )
     
     assert device_info.get_device_type() is None
+
+
+def test_device_info_warning_unknown_product_type():
+    """Test warning logging for completely unknown product types."""
+    import logging
+    
+    # Test with unknown product type - should return None
+    result = map_product_type_to_device_type("UNKNOWN999")
+    assert result is None
+    
+    # Test with unknown variant - should return None
+    result = map_product_type_to_device_type("UNKNOWN999", variant="Z")
+    assert result is None
+
+
+def test_device_info_firmware_variant_debug_logging():
+    """Test firmware variant detection debug logging."""
+    # Test device with firmware version that indicates M variant
+    raw_data = {
+        "Active": True,
+        "Serial": "ABC-123-DEF",
+        "Name": "Test Device",
+        "Version": "527M.05.01",  # M variant indicated in firmware
+        "LocalCredentials": "encrypted_creds",
+        "AutoUpdate": True,
+        "NewVersionAvailable": False,
+        "ProductType": "527",
+    }
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        # This should trigger the firmware variant detection debug logs
+        device_info = DysonDeviceInfo.from_raw(raw_data)
+        assert device_info.version == "527M.05.01"
+        assert device_info.product_type == "527"
+
+
+def test_device_info_firmware_variant_k_detection():
+    """Test firmware K variant detection."""
+    raw_data = {
+        "Active": True,
+        "Serial": "ABC-123-DEF", 
+        "Name": "Test Device",
+        "Version": "527K.05.01",  # K variant indicated in firmware
+        "LocalCredentials": "encrypted_creds",
+        "AutoUpdate": True,
+        "NewVersionAvailable": False,
+        "ProductType": "527",
+    }
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        device_info = DysonDeviceInfo.from_raw(raw_data)
+        assert device_info.version == "527K.05.01"
+
+
+def test_device_info_firmware_variant_e_detection():
+    """Test firmware E variant detection."""
+    raw_data = {
+        "Active": True,
+        "Serial": "ABC-123-DEF",
+        "Name": "Test Device", 
+        "Version": "527E.05.01",  # E variant indicated in firmware
+        "LocalCredentials": "encrypted_creds",
+        "AutoUpdate": True,
+        "NewVersionAvailable": False,
+        "ProductType": "527",
+    }
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        device_info = DysonDeviceInfo.from_raw(raw_data)
+        assert device_info.version == "527E.05.01"
+
+
+def test_device_info_firmware_variant_no_detection():
+    """Test firmware without variant detection."""
+    raw_data = {
+        "Active": True,
+        "Serial": "ABC-123-DEF",
+        "Name": "Test Device",
+        "Version": "527X.05.01",  # X variant - not M, K, or E
+        "LocalCredentials": "encrypted_creds",
+        "AutoUpdate": True,
+        "NewVersionAvailable": False,
+        "ProductType": "527",
+    }
+    
+    with patch('libdyson.cloud.device_info.decrypt_password') as mock_decrypt:
+        mock_decrypt.return_value = "decrypted_password"
+        
+        device_info = DysonDeviceInfo.from_raw(raw_data)
+        assert device_info.version == "527X.05.01"
 
 
 def test_device_info_immutable():

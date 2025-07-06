@@ -219,3 +219,80 @@ def test_unpad_various_padding_sizes():
     padding_needed = 16 - (len(message) % 16)
     padded = message + chr(padding_needed) * padding_needed
     assert _unpad(padded) == message
+
+
+def test_unpad_single_character():
+    """Test unpadding with single character strings."""
+    # Test with single character that has valid padding
+    result = _unpad("A")  # ord('A') = 65, so should remove 65 characters (more than string length)
+    assert result == ""  # Should return empty string when trying to remove more than length
+    
+    # Test with padding character at the end
+    padded = "test" + chr(4) * 4  # 4 padding characters
+    result = _unpad(padded)
+    assert result == "test"
+
+
+def test_unpad_all_padding():
+    """Test unpadding when entire string is padding."""
+    # String that's all padding characters
+    all_padding = chr(3) * 3  # 3 characters, each with value 3
+    result = _unpad(all_padding)
+    assert result == ""
+
+
+def test_decrypt_password_minimal_valid():
+    """Test decryption with minimal valid input."""
+    # Create a minimal valid encrypted password
+    import base64
+    import json
+    from libdyson.cloud.utils import DYSON_ENCRYPTION_KEY, DYSON_ENCRYPTION_INIT_VECTOR
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    
+    # Create test data
+    test_data = {"apPasswordHash": "test_password"}
+    test_json = json.dumps(test_data)
+    
+    # Add padding
+    padding_length = 16 - (len(test_json) % 16)
+    padded_data = test_json + chr(padding_length) * padding_length
+    
+    # Encrypt with the known key and IV
+    cipher = Cipher(algorithms.AES(DYSON_ENCRYPTION_KEY), modes.CBC(DYSON_ENCRYPTION_INIT_VECTOR))
+    encryptor = cipher.encryptor()
+    encrypted = encryptor.update(padded_data.encode()) + encryptor.finalize()
+    
+    # Base64 encode
+    encrypted_b64 = base64.b64encode(encrypted).decode()
+    
+    # Test decryption
+    result = decrypt_password(encrypted_b64)
+    assert result == "test_password"
+
+
+def test_decrypt_password_unicode_content():
+    """Test decryption with unicode content."""
+    # Create test data with unicode
+    import base64
+    import json
+    from libdyson.cloud.utils import DYSON_ENCRYPTION_KEY, DYSON_ENCRYPTION_INIT_VECTOR
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    
+    test_data = {"apPasswordHash": "tëst_pässwörd_üñíçødé"}
+    test_json = json.dumps(test_data, ensure_ascii=False)
+    
+    # Add padding
+    padding_length = 16 - (len(test_json.encode('utf-8')) % 16)
+    padded_data = test_json + chr(padding_length) * padding_length
+    
+    # Encrypt
+    cipher = Cipher(algorithms.AES(DYSON_ENCRYPTION_KEY), modes.CBC(DYSON_ENCRYPTION_INIT_VECTOR))
+    encryptor = cipher.encryptor()
+    encrypted = encryptor.update(padded_data.encode('utf-8')) + encryptor.finalize()
+    
+    # Base64 encode
+    encrypted_b64 = base64.b64encode(encrypted).decode()
+    
+    # Test decryption
+    result = decrypt_password(encrypted_b64)
+    assert result == "tëst_pässwörd_üñíçødé"
