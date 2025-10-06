@@ -1,7 +1,7 @@
 """Calculate device credential using WiFi information."""
 
 from libdyson import DEVICE_TYPE_NAMES, get_mqtt_info_from_wifi_info
-from libdyson.exceptions import DysonFailedToParseWifiInfo
+from libdyson.old.exceptions import DysonFailedToParseWifiInfo
 
 print(
     "Note that you need to input your Dyson device WiFi information on the sticker"

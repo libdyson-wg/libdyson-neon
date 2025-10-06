@@ -1,8 +1,7 @@
 from getpass import getpass
 
-from libdyson.cloud import DysonAccount
-from libdyson.cloud.account import DysonAccountCN
-from libdyson.exceptions import DysonOTPTooFrequently
+from libdyson import DysonAccount
+from libdyson import DysonAccountCN
 
 print("Please choose your account region")
 print("1: Mainland China")

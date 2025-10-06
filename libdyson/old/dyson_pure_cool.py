@@ -131,7 +131,7 @@ class DysonPureCool(DysonPureCoolBase):
 
     @property
     def oscillation_angle_high(self) -> int:
-        """Return oscillation high angle."""
+        """Return oscillation high angle."""O
         return int(self._get_field_value(self._status, "osau"))
 
     def enable_oscillation(

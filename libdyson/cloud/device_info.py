@@ -4,7 +4,7 @@ from typing import Optional
 
 import attr
 
-from ..const import (  # noqa: F401
+from libdyson.old.const import (  # noqa: F401
     DEVICE_TYPE_360_EYE,
     DEVICE_TYPE_360_HEURIST,
     DEVICE_TYPE_360_VIS_NAV,
