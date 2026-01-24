@@ -325,62 +325,15 @@ class DysonDeviceInfo:
         )
 
     def get_device_type(self) -> Optional[str]:
-        """Get the internal device type code from the cloud product type."""
-        # If product_type already contains the variant (like "358E"), use it directly
-        if self.product_type in CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE:
-            import logging
-
-            _LOGGER = logging.getLogger(__name__)
-            _LOGGER.debug(
-                "Product type '%s' is already a complete type, using directly",
-                self.product_type,
-            )
-            return map_product_type_to_device_type(
-                self.product_type, self.serial, None, self.name
-            )
-
-        # For devices with variants (438, 527, 358), try to extract variant from firmware version if not provided
-        variant_to_use = self.variant
-
+        """Get device type string for MQTT topics."""
         if (
-            self.product_type in ["438", "527", "358"]
-            and (variant_to_use is None or not variant_to_use.strip())
-            and self.version
-            and len(self.version) >= 4
+            len(self.product_type) == 4
+            and self.product_type[:3].isdigit()
+            and self.product_type[-1] in ["E", "K", "M"]
         ):
+            return self.product_type
 
-            # Extract variant from firmware version
-            # Format: {ProductType}{Variant}{ProductCategory}.{VersionInfo}
-            # Examples:
-            # - 438MPF.00.01.003.0011 -> "M" (Pure Cool M variant)
-            # - 527KPF.01.02.003.0001 -> "K" (Pure Hot+Cool K variant)
-            # - 358EPF.02.01.004.0005 -> "E" (Pure Humidify+Cool E variant)
-            firmware_prefix = self.version[:4]
-            if (
-                firmware_prefix.startswith(self.product_type)
-                and len(firmware_prefix) == 4
-            ):
-                potential_variant = firmware_prefix[3]  # Extract the 4th character
-                if potential_variant in ["M", "K", "E"]:
-                    variant_to_use = potential_variant
-                    import logging
+        if self.product_type in ["438", "527", "358"] and self.variant:
+            return self.product_type + self.variant.upper()
 
-                    _LOGGER = logging.getLogger(__name__)
-                    _LOGGER.debug(
-                        "Extracted variant '%s' from firmware version: %s (ProductType: %s)",
-                        potential_variant,
-                        self.version,
-                        self.product_type,
-                    )
-            elif firmware_prefix == "ECG2" and self.product_type == "358":
-                variant_to_use = "E"
-                import logging
-
-                _LOGGER = logging.getLogger(__name__)
-                _LOGGER.debug(
-                    "Detected E variant from ECG2 firmware prefix for PH series"
-                )
-
-        return map_product_type_to_device_type(
-            self.product_type, self.serial, variant_to_use, self.name
-        )
+        return self.product_type
