@@ -21,6 +21,7 @@ from ..const import (  # noqa: F401
     DEVICE_TYPE_PURIFIER_COOL_M,
     DEVICE_TYPE_PURIFIER_HOT_COOL_E,
     DEVICE_TYPE_PURIFIER_HOT_COOL_K,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_M,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
 )
@@ -57,10 +58,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     "TP09": DEVICE_TYPE_PURE_COOL,  # All TP09 variants use DysonPureCool class
     "TP11": DEVICE_TYPE_PURE_COOL,  # All TP11 variants use DysonPureCool class
     "PC1": DEVICE_TYPE_PURE_COOL,  # All PC1 variants use DysonPureCool class
-    # Variant combinations for Cool series - all merged to use the same device type
-    "438K": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
-    "438E": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
-    "438M": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
+    # Variant combinations for Cool series - must preserve variant for MQTT topic
+    "438K": DEVICE_TYPE_PURIFIER_COOL_K,
+    "438E": DEVICE_TYPE_PURIFIER_COOL_E,
+    "438M": DEVICE_TYPE_PURIFIER_COOL_M,
     # Pure Hot+Cool Link models
     "HP02": DEVICE_TYPE_PURE_HOT_COOL_LINK,
     "455": DEVICE_TYPE_PURE_HOT_COOL_LINK,
@@ -70,10 +71,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     # Purifier Hot+Cool models (newer) - all merged to use the same device type
     "HP07": DEVICE_TYPE_PURE_HOT_COOL,  # All HP07 variants use DysonPureHotCool class
     "HP09": DEVICE_TYPE_PURE_HOT_COOL,  # All HP09 variants use DysonPureHotCool class
-    # Variant combinations for Hot+Cool series - all merged to use the same device type
-    "527K": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
-    "527E": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
-    "527M": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
+    # Variant combinations for Hot+Cool series - must preserve variant for MQTT topic
+    "527K": DEVICE_TYPE_PURIFIER_HOT_COOL_K,
+    "527E": DEVICE_TYPE_PURIFIER_HOT_COOL_E,
+    "527M": DEVICE_TYPE_PURIFIER_HOT_COOL_M,
     # Pure Humidify+Cool models - all variants use the same DysonPurifierHumidifyCool class
     "PH01": DEVICE_TYPE_PURE_HUMIDIFY_COOL,
     "PH02": DEVICE_TYPE_PURE_HUMIDIFY_COOL,
@@ -81,10 +82,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     # Purifier Humidify+Cool models (newer) - all merged to use the same device type
     "PH03": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # All PH03 variants use DysonPurifierHumidifyCool class
     "PH04": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # All PH04 variants use DysonPurifierHumidifyCool class
-    # Variant combinations for Humidify+Cool series - all merged to use the same device type
-    "358K": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
-    "358E": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
-    "358M": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
+    # Variant combinations for Humidify+Cool series - must preserve variant for MQTT topic
+    "358K": DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
+    "358E": DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
+    "358M": DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,  # PH series doesn't have M variant, map to K
     # Purifier Big+Quiet models
     "BP02": DEVICE_TYPE_PURIFIER_BIG_QUIET,
     "BP03": DEVICE_TYPE_PURIFIER_BIG_QUIET,
@@ -326,20 +327,9 @@ class DysonDeviceInfo:
 
     def get_device_type(self) -> Optional[str]:
         """Get the internal device type code from the cloud product type."""
-        # If product_type already contains the variant (like "358E"), use it directly
-        if self.product_type in CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE:
-            import logging
-
-            _LOGGER = logging.getLogger(__name__)
-            _LOGGER.debug(
-                "Product type '%s' is already a complete type, using directly",
-                self.product_type,
-            )
-            return map_product_type_to_device_type(
-                self.product_type, self.serial, None, self.name
-            )
-
-        # For devices with variants (438, 527, 358), try to extract variant from firmware version if not provided
+        # Always pass variant to ensure correct MQTT topic for variant devices.
+        # Even if product_type is in the mapping, the variant may be needed
+        # to construct the correct combined type (e.g., "527" + "K" = "527K").
         variant_to_use = self.variant
 
         if (
