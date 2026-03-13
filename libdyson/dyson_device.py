@@ -37,6 +37,7 @@ class DysonDevice:
         self._connected = threading.Event()
         self._disconnected = threading.Event()
         self._status = None
+        self._wifi_telemetry = {}
         self._status_data_available = threading.Event()
         self._callbacks = []
 
@@ -59,6 +60,24 @@ class DysonDevice:
     @abstractmethod
     def _status_topic(self) -> str:
         """MQTT status topic."""
+
+    @property
+    def rssi(self) -> Optional[int]:
+        """Return WiFi signal strength in dBm."""
+        rssi = self._wifi_telemetry.get("rssi")
+        return int(rssi) if rssi is not None else None
+
+    @property
+    def wifi_channel(self) -> Optional[int]:
+        """Return WiFi channel."""
+        channel = self._wifi_telemetry.get("channel")
+        return int(channel) if channel is not None else None
+
+    @property
+    def free_heap(self) -> Optional[int]:
+        """Return free global heap in bytes."""
+        heap = self._wifi_telemetry.get("fghp")
+        return int(heap) if heap is not None else None
 
     @property
     def _command_topic(self) -> str:
@@ -190,7 +209,11 @@ class DysonDevice:
 
     def _handle_message(self, payload: dict) -> None:
         if payload["msg"] in ["CURRENT-STATE", "STATE-CHANGE"]:
-            _LOGGER.debug("New state: %s", payload)
+            _LOGGER.info("Received MQTT status response: %s", payload)
+            # Update WiFi telemetry if available in top-level
+            for field in ["rssi", "channel", "fghp", "fqhp"]:
+                if field in payload:
+                    self._wifi_telemetry[field] = payload[field]
             self._update_status(payload)
             if not self._status_data_available.is_set():
                 self._status_data_available.set()
@@ -211,6 +234,7 @@ class DysonDevice:
             "time": mqtt_time(),
         }
         payload.update(data)
+        _LOGGER.info("Sending MQTT command to %s: %s", self._command_topic, payload)
         self._mqtt_client.publish(self._command_topic, json.dumps(payload))
 
     def request_current_status(self) -> None:
@@ -221,6 +245,7 @@ class DysonDevice:
             "msg": "REQUEST-CURRENT-STATE",
             "time": mqtt_time(),
         }
+        _LOGGER.info("Sending MQTT command to %s: %s", self._command_topic, payload)
         self._mqtt_client.publish(self._command_topic, json.dumps(payload))
 
 
@@ -346,7 +371,7 @@ class DysonFanDevice(DysonDevice):
     def _handle_message(self, payload: dict) -> None:
         super()._handle_message(payload)
         if payload["msg"] == "ENVIRONMENTAL-CURRENT-SENSOR-DATA":
-            _LOGGER.debug("New environmental state: %s", payload)
+            _LOGGER.info("Received MQTT environmental response: %s", payload)
             self._environmental_data = payload["data"]
             if not self._environmental_data_available.is_set():
                 self._environmental_data_available.set()
@@ -367,6 +392,7 @@ class DysonFanDevice(DysonDevice):
                 "data": kwargs,
             }
         )
+        _LOGGER.info("Sending MQTT command to %s: %s", self._command_topic, payload)
         self._mqtt_client.publish(self._command_topic, payload, 1)
 
     def _request_first_data(self) -> bool:
@@ -387,6 +413,7 @@ class DysonFanDevice(DysonDevice):
             "msg": "REQUEST-PRODUCT-ENVIRONMENT-CURRENT-SENSOR-DATA",
             "time": mqtt_time(),
         }
+        _LOGGER.info("Sending MQTT command to %s: %s", self._command_topic, payload)
         self._mqtt_client.publish(self._command_topic, json.dumps(payload))
 
     @abstractmethod
