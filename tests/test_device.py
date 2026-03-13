@@ -184,3 +184,26 @@ def test_status_update(mqtt_client: MockedMQTT):
     device.remove_message_listener(callback)
     mqtt_client.state_change(new_status)
     callback.assert_not_called()
+
+
+def test_wifi_telemetry(mqtt_client: MockedMQTT):
+    """Test WiFi telemetry parsing."""
+    device = _TestDevice(SERIAL, CREDENTIAL)
+    device.connect(HOST)
+
+    # Initial status has rssi="-29" in MockedMQTT (from STATUS)
+    # Wait, MockedMQTT uses STATUS = {"key1": "V1", "key2": "V2"} by default in conftest?
+    # No, test_device.py defines its own STATUS.
+    
+    wifi_status = {
+        "rssi": "-41",
+        "channel": "11",
+        "fghp": "61312",
+        "product-state": {
+            "key1": "V3"
+        }
+    }
+    mqtt_client.state_change(wifi_status)
+    assert device.rssi == -41
+    assert device.wifi_channel == 11
+    assert device.free_heap == 61312
