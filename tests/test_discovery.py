@@ -60,7 +60,7 @@ def test_discovery(
     listener.add_service(zeroconf, TYPE_DYSON_360_EYE, name)
     callback = MagicMock()
     discovery.register_device(device, callback)
-    callback.assert_called_once_with(HOST)
+    callback.assert_called_once_with(HOST, None)
 
     # Pure Cool Link, registered before discovered
     serial = "NK6-CN-HAA0000A"
@@ -71,7 +71,7 @@ def test_discovery(
     service_info = ServiceInfo(TYPE_DYSON_FAN, name, addresses=[address])
     zeroconf.get_service_info = MagicMock(return_value=service_info)
     listener.add_service(zeroconf, TYPE_DYSON_FAN, name)
-    callback.assert_called_once_with(HOST)
+    callback.assert_called_once_with(HOST, None)
 
     # Stop discovery
     discovery.stop_discovery()

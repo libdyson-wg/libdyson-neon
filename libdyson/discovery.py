@@ -23,12 +23,19 @@ class DysonDiscovery:
         self._browser = None
 
     def register_device(
-        self, device: DysonDevice, callback: Callable[[str], None]
+        self,
+        device: DysonDevice,
+        callback: Callable[[str, Optional[str]], None],
     ) -> None:
-        """Register a device."""
+        """Register a device.
+
+        The callback is called with (ip_address, mac_address) when the device
+        is discovered. mac_address is None if not advertised in the mDNS record.
+        """
         with self._lock:
             if device.serial in self._discovered:
-                callback(self._discovered[device.serial])
+                address, mac = self._discovered[device.serial]
+                callback(address, mac)
             else:
                 self._registered[device.serial] = callback
 
@@ -39,12 +46,42 @@ class DysonDiscovery:
         else:  # TYPE_DYSON_FAN
             serial = (info.name.split(".")[0]).split("_")[1]
         address = socket.inet_ntoa(info.addresses[0])
+        mac = self._extract_mac(info)
         with self._lock:
             if serial in self._registered:
                 callback = self._registered.pop(serial)
-                callback(address)
+                callback(address, mac)
             else:
-                self._discovered[serial] = address
+                # maps serial -> (ip_address, mac_address_or_None)
+                self._discovered[serial] = (address, mac)
+
+    def _extract_mac(self, info: ServiceInfo) -> Optional[str]:
+        """Extract MAC address from a mDNS ServiceInfo record.
+
+        Tries two sources in order:
+
+        Strategy 1 — TXT record properties (bytes keys). Some firmware versions
+        advertise the MAC here; the key name varies by model generation.
+        """
+        properties = getattr(info, "properties", {}) or {}
+        for key in (b"mac", b"MAC", b"macAddress", b"mac_address"):
+            val = properties.get(key)
+            if val is not None:
+                return val.decode("utf-8")
+
+        # Strategy 2 — mDNS server hostname, e.g. "Dyson-AABBCCDDEEFF.local."
+        # The MAC appears as a 12-hex-char segment with no separators.
+        # Not all firmware versions use this hostname format, so may return None.
+        server = getattr(info, "server", None)
+        if server:
+            hostname = server.rstrip(".")
+            for segment in hostname.split("-"):
+                if len(segment) == 12 and all(
+                    c in "0123456789abcdefABCDEF" for c in segment
+                ):
+                    return segment
+
+        return None  # MAC not advertised in this mDNS record
 
     def start_discovery(self, zeroconf_instance: Optional[Zeroconf] = None) -> None:
         """Start discovery."""
