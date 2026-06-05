@@ -21,6 +21,7 @@ from .const import (
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
     DEVICE_TYPE_PURIFIER_BIG_QUIET,
+    DEVICE_TYPE_PURE_COOL_CF1,
 )
 
 from .const import CleaningMode  # noqa: F401
@@ -39,7 +40,7 @@ from .dyson_360_eye import Dyson360Eye
 from .dyson_360_heurist import Dyson360Heurist
 from .dyson_360_vis_nav import Dyson360VisNav
 from .dyson_device import DysonDevice
-from .dyson_pure_cool import DysonPureCool
+from .dyson_pure_cool import DysonPureCool, DysonCoolCF1
 from .dyson_pure_cool_link import DysonPureCoolLink
 from .dyson_pure_hot_cool import DysonPureHotCool
 from .dyson_pure_hot_cool_link import DysonPureHotCoolLink
@@ -102,6 +103,9 @@ def get_device(serial: str, credential: str, device_type: str) -> Optional[Dyson
     }:
         _LOGGER.debug("Creating DysonBigQuiet device")
         return DysonBigQuiet(serial, credential, device_type)
+    if device_type == DEVICE_TYPE_PURE_COOL_CF1:
+        _LOGGER.debug("Creating DysonCoolCF1 device")
+        return DysonCoolCF1(serial, credential, device_type)
     
     _LOGGER.warning("Unknown device type: %s for serial: %s", device_type, serial)
     return None
