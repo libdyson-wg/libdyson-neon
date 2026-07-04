@@ -43,14 +43,17 @@ class DysonPureCoolBase(DysonFanDevice):
     def carbon_filter_life(self) -> Optional[int]:
         """Return carbon filter life in percentage."""
         filter_life = self._get_field_value(self._status, "cflr")
-        if filter_life == "INV":
+        if filter_life is None or filter_life == "INV":
             return None
         return int(filter_life)
 
     @property
     def hepa_filter_life(self) -> Optional[int]:
         """Return HEPA filter life in percentage."""
-        return int(self._get_field_value(self._status, "hflr"))
+        filter_life = self._get_field_value(self._status, "hflr")
+        if filter_life is None or filter_life == "INV":
+            return None
+        return int(filter_life)
 
     @property
     def particulate_matter_2_5(self):
@@ -175,3 +178,13 @@ class DysonPureCool(DysonPureCoolBase):
         else:
             oson = "OFF"
         self._set_configuration(oson=oson)
+
+
+class DysonCoolCF1(DysonPureCool):
+    """Dyson Cool CF1 desk fan.
+
+    Shares the Pure Cool control surface (fpwr/fnsp/oson/osal/osau/ancp), but
+    unlike the purifier models it has no air-quality sensors and no filter, so
+    those fields are absent from its status payload. Exposed as its own class so
+    integrations can avoid creating empty sensor/filter entities for it.
+    """
