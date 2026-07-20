@@ -54,6 +54,11 @@ class DysonPurifierHumidifyCool(DysonPureCoolBase):
         return WATER_HARDNESS_STR_TO_ENUM[self._get_field_value(self._status, "wath")]
 
     @property
+    def water_tank_empty(self) -> Optional[bool]:
+        """Return whether the water tank is empty (tnke fault)."""
+        return self._get_fault_value("tnke")
+
+    @property
     def time_until_next_clean(self) -> int:
         """Return the time remaining in hours before the next deep cleaning."""
         return int(self._get_field_value(self._status, "cltr"))

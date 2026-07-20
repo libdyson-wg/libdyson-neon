@@ -206,9 +206,32 @@ def test_environmental_callback(mqtt_client: MockedMQTT):
     callback = MagicMock()
     device.add_message_listener(callback)
     device.connect(HOST)
-    callback.assert_called_with(MessageType.ENVIRONMENTAL)
+    callback.assert_any_call(MessageType.ENVIRONMENTAL)
     callback.reset_mock()
 
     device.request_environmental_data()
     callback.assert_called_once_with(MessageType.ENVIRONMENTAL)
     callback.reset_mock()
+
+
+def test_faults_callback(mqtt_client: MockedMQTT):
+    """Test fault parsing and callback on faults data."""
+    device = DysonFanDevice(SERIAL, CREDENTIAL, DEVICE_TYPE)
+    callback = MagicMock()
+    device.add_message_listener(callback)
+    device.connect(HOST)
+
+    # No fault has been reported yet, so the state is unknown.
+    assert device.filter_replacement_required is None
+    callback.reset_mock()
+
+    # A filter fault is raised.
+    mqtt_client.faults_change({"product-warnings": {"fltr": "FAIL"}})
+    callback.assert_called_once_with(MessageType.FAULT)
+    assert device.filter_replacement_required is True
+    callback.reset_mock()
+
+    # The filter fault is cleared.
+    mqtt_client.faults_change({"product-warnings": {"fltr": "OK"}})
+    callback.assert_called_once_with(MessageType.FAULT)
+    assert device.filter_replacement_required is False

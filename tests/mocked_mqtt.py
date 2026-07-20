@@ -20,6 +20,8 @@ class MockedMQTT:
         status_topic: str,
         status: dict,
         environmental_data: Optional[dict] = None,
+        faults_topic: Optional[str] = None,
+        faults: Optional[dict] = None,
     ) -> None:
         """Initialize the client with expected values."""
         self._expected_host = host
@@ -29,6 +31,8 @@ class MockedMQTT:
         self._status_topic = status_topic
         self._status = status
         self._environmental_data = environmental_data
+        self._faults_topic = faults_topic
+        self._faults = faults
 
     def refersh(self, protocol: str):
         """Refresh client state."""
@@ -81,7 +85,7 @@ class MockedMQTT:
 
     def subscribe(self, topic: str) -> None:
         """Subscribe to a topic."""
-        assert topic == self._status_topic
+        assert topic in (self._status_topic, self._faults_topic)
         self._subscribed = True
 
     def publish(self, topic: str, payload: str, qos: int = 0) -> None:
@@ -93,14 +97,20 @@ class MockedMQTT:
         if message_type == "REQUEST-CURRENT-STATE":
             data = {"msg": "CURRENT-STATE"}
             data.update(self._status)
+            response_topic = self._status_topic
         elif message_type == "REQUEST-PRODUCT-ENVIRONMENT-CURRENT-SENSOR-DATA":
             data = {"msg": "ENVIRONMENTAL-CURRENT-SENSOR-DATA"}
             data.update(self._environmental_data)
+            response_topic = self._status_topic
+        elif message_type == "REQUEST-CURRENT-FAULTS":
+            data = {"msg": "CURRENT-FAULTS"}
+            data.update(self._faults or {})
+            response_topic = self._faults_topic or self._status_topic
         else:
             self.commands.append(payload)
             return
 
-        message = mqtt.MQTTMessage(topic=self._status_topic.encode("utf-8"))
+        message = mqtt.MQTTMessage(topic=response_topic.encode("utf-8"))
         data["time"] = mqtt_time()
         message.payload = json.dumps(data).encode("utf-8")
         self.on_message(self, None, message)
@@ -113,5 +123,17 @@ class MockedMQTT:
         }
         data.update(new_status)
         message = mqtt.MQTTMessage(topic=self._status_topic.encode("utf-8"))
+        message.payload = json.dumps(data).encode("utf-8")
+        self.on_message(self, None, message)
+
+    def faults_change(self, new_faults) -> None:
+        """Trigger a faults change."""
+        data = {
+            "msg": "FAULTS-CHANGE",
+            "time": mqtt_time(),
+        }
+        data.update(new_faults)
+        topic = self._faults_topic or self._status_topic
+        message = mqtt.MQTTMessage(topic=topic.encode("utf-8"))
         message.payload = json.dumps(data).encode("utf-8")
         self.on_message(self, None, message)

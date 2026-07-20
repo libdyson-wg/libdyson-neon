@@ -30,6 +30,12 @@ STATUS = {
     }
 }
 
+FAULTS = {
+    "product-warnings": {
+        "tnke": "FAIL",
+    },
+}
+
 
 def test_properties(mqtt_client: MockedMQTT):
     """Test properties of Pure Hot+Cool Link."""
@@ -115,3 +121,16 @@ def test_command(
         command_args,
         msg_data,
     )
+
+
+def test_water_tank_empty(mqtt_client: MockedMQTT):
+    """Test the water tank empty fault."""
+    device = DysonPurifierHumidifyCool(SERIAL, CREDENTIAL, DEVICE_TYPE)
+    device.connect(HOST)
+
+    # The device reports the tank fault on connect (see FAULTS).
+    assert device.water_tank_empty is True
+
+    # Refilling the tank clears the fault.
+    mqtt_client.faults_change({"product-warnings": {"tnke": "OK"}})
+    assert device.water_tank_empty is False

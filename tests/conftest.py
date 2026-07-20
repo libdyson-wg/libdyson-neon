@@ -14,6 +14,7 @@ def mqtt_client(request: pytest.FixtureRequest) -> MockedMQTT:
     device_type = request.module.DEVICE_TYPE
     status = request.module.STATUS
     environmental_data = request.module.ENVIRONMENTAL_DATA
+    faults = getattr(request.module, "FAULTS", None)
     mocked_mqtt = MockedMQTT(
         HOST,
         SERIAL,
@@ -22,6 +23,8 @@ def mqtt_client(request: pytest.FixtureRequest) -> MockedMQTT:
         f"{device_type}/{SERIAL}/status/current",
         status,
         environmental_data,
+        f"{device_type}/{SERIAL}/status/faults",
+        faults,
     )
     with patch("libdyson.dyson_device.mqtt.Client", mocked_mqtt.refersh), patch(
         "libdyson.dyson_device.TIMEOUT", 0

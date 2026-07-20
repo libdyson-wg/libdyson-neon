@@ -65,6 +65,10 @@ class DysonDevice:
         """MQTT command topic."""
         return f"{self.device_type}/{self._serial}/command"
 
+    def _subscribe_topics(self, client: mqtt.Client) -> None:
+        """Subscribe to the topics the device publishes on connect."""
+        client.subscribe(self._status_topic)
+
     def _request_first_data(self) -> bool:
         """Request and wait for first data."""
         self.request_current_status()
@@ -112,7 +116,7 @@ class DysonDevice:
             elif rc != mqtt.CONNACK_ACCEPTED:
                 error = DysonConnectionRefused
             else:
-                client.subscribe(self._status_topic)
+                self._subscribe_topics(client)
             self._connected.set()
 
         def _on_disconnect(client, userdata, rc):
@@ -173,7 +177,7 @@ class DysonDevice:
         _LOGGER.debug("Connected with result code %d", rc)
         self._disconnected.clear()
         self._connected.set()
-        client.subscribe(self._status_topic)
+        self._subscribe_topics(client)
         for callback in self._callbacks:
             callback(MessageType.STATE)
 
@@ -235,6 +239,9 @@ class DysonFanDevice(DysonDevice):
         self._environmental_data = {}
         self._environmental_data_available = threading.Event()
 
+        self._faults = {}
+        self._faults_data_available = threading.Event()
+
     @property
     def device_type(self) -> str:
         """Device type."""
@@ -244,6 +251,16 @@ class DysonFanDevice(DysonDevice):
     def _status_topic(self) -> str:
         """MQTT status topic."""
         return f"{self.device_type}/{self._serial}/status/current"
+
+    @property
+    def _faults_topic(self) -> str:
+        """MQTT faults topic."""
+        return f"{self.device_type}/{self._serial}/status/faults"
+
+    def _subscribe_topics(self, client: mqtt.Client) -> None:
+        """Subscribe to the status and faults topics on connect."""
+        super()._subscribe_topics(client)
+        client.subscribe(self._faults_topic)
 
     @property
     def fan_state(self) -> bool:
@@ -343,6 +360,30 @@ class DysonFanDevice(DysonDevice):
             return int(value)
         return float(value) / divisor
 
+    def _update_faults(self, payload: dict) -> None:
+        """Merge fault and warning fields from a faults message."""
+        for section in (
+            "product-errors",
+            "product-warnings",
+            "module-errors",
+            "module-warnings",
+        ):
+            data = payload.get(section)
+            if isinstance(data, dict):
+                self._faults.update(data)
+
+    def _get_fault_value(self, field: str) -> Optional[bool]:
+        """Return whether the given fault/warning field is active."""
+        value = self._get_field_value(self._faults, field)
+        if value is None:
+            return None
+        return value != "OK"
+
+    @property
+    def filter_replacement_required(self) -> Optional[bool]:
+        """Return whether the filter fault (fltr) is active."""
+        return self._get_fault_value("fltr")
+
     def _handle_message(self, payload: dict) -> None:
         super()._handle_message(payload)
         if payload["msg"] == "ENVIRONMENTAL-CURRENT-SENSOR-DATA":
@@ -352,6 +393,13 @@ class DysonFanDevice(DysonDevice):
                 self._environmental_data_available.set()
             for callback in self._callbacks:
                 callback(MessageType.ENVIRONMENTAL)
+        elif payload["msg"] in ["CURRENT-FAULTS", "FAULTS-CHANGE"]:
+            _LOGGER.debug("New faults state: %s", payload)
+            self._update_faults(payload)
+            if not self._faults_data_available.is_set():
+                self._faults_data_available.set()
+            for callback in self._callbacks:
+                callback(MessageType.FAULT)
 
     def _update_status(self, payload: dict) -> None:
         self._status = payload["product-state"]
@@ -373,6 +421,7 @@ class DysonFanDevice(DysonDevice):
         """Request and wait for first data."""
         self.request_current_status()
         self.request_environmental_data()
+        self.request_faults()
         status_available = self._status_data_available.wait(timeout=TIMEOUT)
         environmental_available = self._environmental_data_available.wait(
             timeout=TIMEOUT
@@ -385,6 +434,16 @@ class DysonFanDevice(DysonDevice):
             raise DysonNotConnected
         payload = {
             "msg": "REQUEST-PRODUCT-ENVIRONMENT-CURRENT-SENSOR-DATA",
+            "time": mqtt_time(),
+        }
+        self._mqtt_client.publish(self._command_topic, json.dumps(payload))
+
+    def request_faults(self):
+        """Request current faults."""
+        if not self.is_connected:
+            raise DysonNotConnected
+        payload = {
+            "msg": "REQUEST-CURRENT-FAULTS",
             "time": mqtt_time(),
         }
         self._mqtt_client.publish(self._command_topic, json.dumps(payload))
