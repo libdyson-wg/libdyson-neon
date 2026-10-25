@@ -22,7 +22,7 @@ from .device_info import DysonDeviceInfo
 DYSON_API_HOST = "https://appapi.cp.dyson.com"
 DYSON_API_HOST_CN = "https://appapi.cp.dyson.cn"
 DYSON_API_HEADERS = {
-    "User-Agent": "android client"
+    "User-Agent": "okhttp/4.12.0"
 }
 
 API_PATH_PROVISION_APP = "/v1/provisioningservice/application/Android/version"
